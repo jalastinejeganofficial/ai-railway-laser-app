@@ -169,6 +169,32 @@ If automatic deployment fails:
 - 🚀 **Upgrade to paid plan** for always-on service
 - 🔒 **HTTPS enabled** by default on Render
 
+### 🐛 Common Deployment Issues & Solutions:
+
+#### Issue: Build Fails
+**Solution**: Check that all environment variables are set in Render dashboard
+
+#### Issue: Database Connection Error
+**Solution**: 
+1. Verify SUPABASE_KEY is correct
+2. Ensure tables exist (run SQL scripts below)
+3. Check Supabase project is active
+
+#### Issue: App Crashes on Startup
+**Solution**:
+1. Check logs in Render dashboard
+2. Verify all dependencies in requirements.txt
+3. Ensure Python version matches runtime.txt
+
+#### Issue: 500 Internal Server Error
+**Solution**:
+1. Check environment variables are set
+2. Verify Flask app starts locally
+3. Review application logs
+
+### 📊 Health Check Endpoint
+Once deployed, test your app health at: `https://your-app.onrender.com/health`
+
 ## 📱 User Roles
 
 ### 👨‍💼 Admin Features

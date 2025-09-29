@@ -20,6 +20,22 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key-change-in-production")
 
+# Production error handling
+if os.getenv('FLASK_ENV') == 'production':
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    app.logger.setLevel(logging.INFO)
+    
+    # Error handlers for production
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        app.logger.error(f"Server Error: {error}")
+        return "Internal Server Error", 500
+    
+    @app.errorhandler(404)
+    def not_found_error(error):
+        return "Page Not Found", 404
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -682,19 +698,25 @@ def report_generated(lot):
 
 @app.route("/health")
 def health_check():
-    """Health check endpoint"""
+    """Health check endpoint for Render"""
     try:
         # Test database connection
         response = supabase.table('users').select('*').limit(1).execute()
         db_status = "✅ Database connected"
+        db_healthy = True
     except Exception as e:
         db_status = f"❌ Database error: {e}"
+        db_healthy = False
     
-    return jsonify({
-        "status": "healthy",
+    health_data = {
+        "status": "healthy" if db_healthy else "unhealthy",
         "database": db_status,
-        "timestamp": datetime.now().isoformat()
-    })
+        "timestamp": datetime.now().isoformat(),
+        "version": "1.0.0",
+        "environment": os.getenv('FLASK_ENV', 'development')
+    }
+    
+    return jsonify(health_data), 200 if db_healthy else 503
 
 if __name__ == "__main__":
     # Initialize database and create default users
