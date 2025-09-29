@@ -8,6 +8,7 @@ Gunicorn>=21.0.0
 # Image processing for QR code handling - use compatible versions
 Pillow>=10.0.0
 # pyzbar>=0.1.9  # Commented out due to zbar system library requirement
+# qreader>=3.0.0  # Alternative QR library
 
 # Security utilities
 Werkzeug>=3.0.0

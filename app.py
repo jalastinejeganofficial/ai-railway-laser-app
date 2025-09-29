@@ -2,14 +2,46 @@ from flask import Flask, render_template, request, redirect, url_for, Response, 
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from datetime import datetime, timedelta
 from PIL import Image
+from PIL.Image import Image as PILImage
+# Try to import qreader first (pure Python), fallback to pyzbar if available
+QR_SCANNING_AVAILABLE = False
+QR_LIBRARY = "none"
+
+# Define default function
+
+def decode_image_qr(image: PILImage):
+    """Decode QR code from image using available library"""
+    return []
+
+# Try to load qreader first
 try:
-    from pyzbar.pyzbar import decode
-    PYZBAR_AVAILABLE = True
+    from qreader import QReader
+    qreader = QReader()
+    def _decode_with_qreader(image: PILImage):
+        result = qreader.detect_and_decode(image=image)
+        return result if result else []
+    decode_image_qr = _decode_with_qreader
+    QR_SCANNING_AVAILABLE = True
+    QR_LIBRARY = "qreader"
+    print("✅ QR code scanning enabled with qreader")
 except ImportError:
-    print("⚠️ pyzbar not available - QR code scanning will be disabled")
-    PYZBAR_AVAILABLE = False
-    def decode(image):
-        return []  # Return empty list as fallback
+    # Try pyzbar as fallback
+    try:
+        from pyzbar.pyzbar import decode
+        def _decode_with_pyzbar(image: PILImage):
+            decoded = decode(image)
+            if decoded:
+                return [decoded[0].data.decode("utf-8")]
+            return []
+        decode_image_qr = _decode_with_pyzbar
+        QR_SCANNING_AVAILABLE = True
+        QR_LIBRARY = "pyzbar"
+        print("✅ QR code scanning enabled with pyzbar")
+    except ImportError:
+        print("⚠️ No QR code library available - QR code scanning will be disabled")
+        QR_SCANNING_AVAILABLE = False
+        QR_LIBRARY = "none"
+
 from werkzeug.security import check_password_hash
 import os, re, requests
 from dotenv import load_dotenv
@@ -230,13 +262,13 @@ def upload_qr():
         return "❌ No file selected"
     
     try:
-        if not PYZBAR_AVAILABLE:
+        if not QR_SCANNING_AVAILABLE:
             return "❌ QR code scanning is currently unavailable. Please contact administrator."
             
         img = Image.open(file.stream)
-        decoded = decode(img)
-        if decoded:
-            qr_data = decoded[0].data.decode("utf-8")
+        decoded_data = decode_image_qr(img)
+        if decoded_data and len(decoded_data) > 0 and decoded_data[0]:
+            qr_data = decoded_data[0]
             return redirect(f"/view-details?code={qr_data}")
         return "❌ QR code not detected."
     except Exception as e:
@@ -724,7 +756,8 @@ def health_check():
         "environment": os.getenv('FLASK_ENV', 'development'),
         "supabase_configured": bool(SUPABASE_KEY and SUPABASE_KEY != "your-supabase-key-here"),
         "openrouter_configured": bool(OPENROUTER_API_KEY),
-        "qr_scanning_available": PYZBAR_AVAILABLE,
+        "qr_scanning_available": QR_SCANNING_AVAILABLE,
+        "qr_library": QR_LIBRARY,
         "timestamp": datetime.now().isoformat(),
         "version": "1.0.0"
     }
