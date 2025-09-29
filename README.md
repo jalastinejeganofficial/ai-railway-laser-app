@@ -41,7 +41,7 @@ A sophisticated Flask web application for managing railway track fittings throug
 - Supabase account
 - OpenRouter API key
 
-### Installation
+### Local Development
 
 1. **Clone the repository**
    ```bash
@@ -67,6 +67,7 @@ A sophisticated Flask web application for managing railway track fittings throug
    SUPABASE_KEY=your_supabase_anon_key
    FLASK_SECRET_KEY=your_secret_key_here
    OPENROUTER_API_KEY=your_openrouter_api_key
+   FLASK_ENV=development
    ```
 
 5. **Database Setup**
@@ -121,6 +122,52 @@ A sophisticated Flask web application for managing railway track fittings throug
    - Default credentials:
      - Admin: `admin` / `admin123`
      - User: `user` / `user123`
+
+## 🌐 Render Deployment
+
+### 🚀 Deploy to Render (Recommended)
+
+1. **Fork this repository** to your GitHub account
+
+2. **Create a new Web Service** on [Render](https://render.com)
+   - Connect your GitHub repository
+   - Choose "Web Service"
+   - Select your forked repository
+
+3. **Configure the service:**
+   - **Name**: `ai-railway-qr-system`
+   - **Environment**: `Python 3`
+   - **Build Command**: `./build.sh`
+   - **Start Command**: `gunicorn --bind 0.0.0.0:$PORT app:app`
+   - **Instance Type**: `Free` (or choose paid for better performance)
+
+4. **Set Environment Variables** in Render dashboard:
+   ```
+   SUPABASE_KEY=your_supabase_anon_key_here
+   FLASK_SECRET_KEY=your_strong_secret_key_here
+   OPENROUTER_API_KEY=your_openrouter_api_key_here
+   FLASK_ENV=production
+   ```
+
+5. **Deploy**: Click "Create Web Service"
+   - Render will automatically build and deploy your app
+   - Wait for the build to complete (✓ "Live" status)
+   - Your app will be available at: `https://your-app-name.onrender.com`
+
+### 🔧 Manual Render Setup
+
+If automatic deployment fails:
+
+1. **Check Build Logs** in Render dashboard
+2. **Verify Environment Variables** are set correctly
+3. **Ensure Supabase Tables** are created (see Database Setup below)
+4. **Check Dependencies** in requirements.txt
+
+### ⚠️ Important Notes for Render:
+- 💰 **Free tier sleeps after 15 minutes** of inactivity
+- 🔄 **Cold starts** may take 30-60 seconds to wake up
+- 🚀 **Upgrade to paid plan** for always-on service
+- 🔒 **HTTPS enabled** by default on Render
 
 ## 📱 User Roles
 

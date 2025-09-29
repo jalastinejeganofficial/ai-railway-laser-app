@@ -1,5 +1,7 @@
 # Environment variables (contains sensitive information)
 .env
+.env.local
+.env.production
 
 # Virtual environment
 .venv/
@@ -81,3 +83,6 @@ Thumbs.db
 # Database
 *.db
 *.sqlite3
+
+# Deployment
+.render/

@@ -707,4 +707,9 @@ if __name__ == "__main__":
     print("🚀 Starting Flask application...")
     print("📝 Default users: admin/admin123, user/user123")
     print(f"🔗 Supabase URL: {SUPABASE_URL}")
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    
+    # Use environment variable for port (Render requirement)
+    port = int(os.environ.get('PORT', 5000))
+    # Disable debug in production
+    debug_mode = os.environ.get('FLASK_ENV') != 'production'
+    app.run(host="0.0.0.0", port=port, debug=debug_mode)

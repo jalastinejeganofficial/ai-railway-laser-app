@@ -2,6 +2,9 @@
 Flask==2.3.3
 Flask-Login==0.6.3
 
+# WSGI server for production deployment
+Gunicorn==21.2.0
+
 # Image processing for QR code handling
 Pillow==10.0.1
 pyzbar==0.1.9
