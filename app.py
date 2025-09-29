@@ -2,7 +2,14 @@ from flask import Flask, render_template, request, redirect, url_for, Response, 
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from datetime import datetime, timedelta
 from PIL import Image
-from pyzbar.pyzbar import decode
+try:
+    from pyzbar.pyzbar import decode
+    PYZBAR_AVAILABLE = True
+except ImportError:
+    print("⚠️ pyzbar not available - QR code scanning will be disabled")
+    PYZBAR_AVAILABLE = False
+    def decode(image):
+        return []  # Return empty list as fallback
 from werkzeug.security import check_password_hash
 import os, re, requests
 from dotenv import load_dotenv
@@ -223,6 +230,9 @@ def upload_qr():
         return "❌ No file selected"
     
     try:
+        if not PYZBAR_AVAILABLE:
+            return "❌ QR code scanning is currently unavailable. Please contact administrator."
+            
         img = Image.open(file.stream)
         decoded = decode(img)
         if decoded:
@@ -714,6 +724,7 @@ def health_check():
         "environment": os.getenv('FLASK_ENV', 'development'),
         "supabase_configured": bool(SUPABASE_KEY and SUPABASE_KEY != "your-supabase-key-here"),
         "openrouter_configured": bool(OPENROUTER_API_KEY),
+        "qr_scanning_available": PYZBAR_AVAILABLE,
         "timestamp": datetime.now().isoformat(),
         "version": "1.0.0"
     }

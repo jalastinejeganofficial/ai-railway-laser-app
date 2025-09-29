@@ -1,3 +1,4 @@
+# Requirements with pyzbar for full QR functionality
 # Flask web framework and related packages
 Flask>=3.0.0,<4.0.0
 Flask-Login>=0.6.0
@@ -5,9 +6,9 @@ Flask-Login>=0.6.0
 # WSGI server for production deployment
 Gunicorn>=21.0.0
 
-# Image processing for QR code handling - use compatible versions
+# Image processing for QR code handling
 Pillow>=10.0.0
-# pyzbar>=0.1.9  # Commented out due to zbar system library requirement
+pyzbar>=0.1.9
 
 # Security utilities
 Werkzeug>=3.0.0

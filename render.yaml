@@ -2,7 +2,12 @@ services:
   - type: web
     name: ai-railway-qr-system
     env: python
-    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && python startup.py
+    buildCommand: |
+      apt-get update
+      apt-get install -y libzbar0 libzbar-dev
+      pip install --upgrade pip
+      pip install -r requirements-full.txt || pip install -r requirements.txt
+      python startup.py
     startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 120 app:app
     plan: free
     envVars:
