@@ -708,15 +708,20 @@ def health_check():
         db_status = f"❌ Database error: {e}"
         db_healthy = False
     
-    health_data = {
-        "status": "healthy" if db_healthy else "unhealthy",
+    # Additional health checks
+    health_checks = {
         "database": db_status,
+        "environment": os.getenv('FLASK_ENV', 'development'),
+        "supabase_configured": bool(SUPABASE_KEY and SUPABASE_KEY != "your-supabase-key-here"),
+        "openrouter_configured": bool(OPENROUTER_API_KEY),
         "timestamp": datetime.now().isoformat(),
-        "version": "1.0.0",
-        "environment": os.getenv('FLASK_ENV', 'development')
+        "version": "1.0.0"
     }
     
-    return jsonify(health_data), 200 if db_healthy else 503
+    overall_status = "healthy" if db_healthy else "unhealthy"
+    health_checks["status"] = overall_status
+    
+    return jsonify(health_checks), 200 if db_healthy else 503
 
 if __name__ == "__main__":
     # Initialize database and create default users

@@ -16,4 +16,8 @@ pip install -r requirements.txt
 echo "✅ Verifying installation..."
 python -c "import flask; import gunicorn; import supabase; print('All critical packages installed successfully!')"
 
+# Run startup validation checks
+echo "🔍 Running startup validation..."
+python startup.py
+
 echo "✅ Build completed successfully!"

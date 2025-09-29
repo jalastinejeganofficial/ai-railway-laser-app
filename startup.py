@@ -57,14 +57,18 @@ def main():
     
     # Check environment
     if not check_environment():
-        sys.exit(1)
+        print("❌ Environment check failed!")
+        return False
     
     # Test database
     if not test_database_connection():
         print("⚠️  Database connection failed, but continuing startup...")
     
     print("✅ Pre-flight checks completed")
-    print("🌐 Starting web server...")
+    return True
 
 if __name__ == "__main__":
-    main()
+    success = main()
+    if not success:
+        sys.exit(1)
+    print("✅ Startup validation completed successfully!")

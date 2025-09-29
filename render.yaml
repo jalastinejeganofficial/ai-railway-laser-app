@@ -3,7 +3,7 @@ services:
     name: ai-railway-qr-system
     env: python
     buildCommand: ./build.sh
-    startCommand: python startup.py && gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 120 app:app
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 120 app:app
     plan: free
     envVars:
       - key: FLASK_ENV
