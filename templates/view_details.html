@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Railway QR Metadata System</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom, #f4f7fc, #e6e9f0);
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Railway tracks background */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background: repeating-linear-gradient(
+        to right,
+        #2c3e50,
+        #2c3e50 12px,
+        #f4f7fc 12px,
+        #f4f7fc 24px
+      );
+      z-index: -1;
+    }
+
+    body::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background: repeating-linear-gradient(
+        to right,
+        #2c3e50,
+        #2c3e50 12px,
+        #f4f7fc 12px,
+        #f4f7fc 24px
+      );
+      z-index: -1;
+    }
+
+    .container {
+      background: #fff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 600px;
+      position: relative;
+      overflow: hidden;
+      border-left: 5px solid #d62c2c;
+      border-right: 5px solid #2c3e50;
+      animation: trackArrival 1.2s ease-out;
+      margin: 20px 0;
+    }
+
+    /* Train animation elements */
+    .train-track {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: #2c3e50;
+    }
+
+    .train {
+      position: absolute;
+      bottom: -12px;
+      left: -80px;
+      width: 60px;
+      height: 22px;
+      background: #d62c2c;
+      border-radius: 6px 6px 0 0;
+      animation: trainMove 15s linear infinite;
+    }
+
+    .train::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      left: 8px;
+      width: 15px;
+      height: 8px;
+      background: #2c3e50;
+      border-radius: 4px 4px 0 0;
+    }
+
+    .train::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 8px;
+      width: 8px;
+      height: 8px;
+      background: #f1c40f;
+      border-radius: 50%;
+      animation: trainLight 2s infinite alternate;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #2c3e50;
+      font-size: clamp(1.4rem, 4vw, 1.8rem);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    h2::before {
+      content: '🚆';
+      font-size: 1.5em;
+    }
+
+    h2::after {
+      content: '🔍';
+      font-size: 1.5em;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      background: #f9fafc;
+      margin: 10px 0;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: clamp(0.9rem, 2.5vw, 1rem);
+      display: flex;
+      justify-content: space-between;
+      border: 1px solid #e3e6ed;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 5px;
+      background: #d62c2c;
+      transform: scaleY(0);
+      transition: transform 0.3s ease;
+    }
+
+    li:hover {
+      transform: translateX(5px);
+      box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    li:hover::before {
+      transform: scaleY(1);
+    }
+
+    strong {
+      color: #2c3e50;
+      font-weight: 600;
+      min-width: 40%;
+    }
+
+    .ai-box {
+      margin-top: 20px;
+      padding: 15px;
+      border: 2px solid #4CAF50;
+      border-radius: 8px;
+      background-color: #f9fff9;
+      position: relative;
+      overflow: hidden;
+      animation: signalPulse 3s infinite;
+    }
+
+    .ai-box h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      color: #4CAF50;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: clamp(1.1rem, 3vw, 1.3rem);
+    }
+
+    .ai-box p {
+      font-size: clamp(0.9rem, 2.5vw, 1rem);
+      line-height: 1.5;
+    }
+
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .footer a {
+      display: inline-block;
+      padding: 12px 20px;
+      background: #2c3e50;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      font-size: clamp(0.9rem, 2.5vw, 1rem);
+      min-height: 44px; /* Minimum touch target size */
+      min-width: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .footer a::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: 0.5s;
+    }
+
+    .footer a:hover, .footer a:focus {
+      background: #d62c2c;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(214, 44, 44, 0.4);
+    }
+
+    .footer a:hover::before, .footer a:focus::before {
+      left: 100%;
+    }
+
+    /* Animations */
+    @keyframes trackArrival {
+      0% {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes trainMove {
+      0% {
+        left: -80px;
+      }
+      100% {
+        left: calc(100% + 80px);
+      }
+    }
+
+    @keyframes trainLight {
+      0% {
+        opacity: 0.3;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+
+    @keyframes signalPulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+      }
+      70% {
+        box-shadow: 0 0 0 8px rgba(76, 175, 80, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+      }
+    }
+
+    /* Responsive design */
+    @media (max-width: 650px) {
+      body {
+        padding: 15px;
+      }
+
+      .container {
+        padding: 20px 15px;
+        border-radius: 10px;
+      }
+
+      li {
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      strong {
+        min-width: auto;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body::before,
+      body::after {
+        height: 15px;
+        background: repeating-linear-gradient(
+          to right,
+          #2c3e50,
+          #2c3e50 10px,
+          #f4f7fc 10px,
+          #f4f7fc 20px
+        );
+      }
+
+      .train {
+        width: 50px;
+        height: 18px;
+        bottom: -10px;
+        left: -60px;
+      }
+
+      .train::before {
+        top: -6px;
+        left: 6px;
+        width: 12px;
+        height: 6px;
+      }
+
+      .train::after {
+        right: 6px;
+        width: 6px;
+        height: 6px;
+      }
+
+      @keyframes trainMove {
+        0% {
+          left: -60px;
+        }
+        100% {
+          left: calc(100% + 60px);
+        }
+      }
+    }
+
+    @media (max-width: 350px) {
+      h2 {
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .footer a {
+        padding: 10px 15px;
+      }
+    }
+
+    /* Reduce motion for users who prefer it */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .train {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="train-track"></div>
+    <div class="train"></div>
+
+    <h2>Railway QR Metadata Details</h2>
+
+    <ul>
+      <li><strong>Item:</strong> <span>{{ record.item if record else 'N/A' }}</span></li>
+      <li><strong>Vendor:</strong> <span>{{ record.vendor if record else 'N/A' }}</span></li>
+      <li><strong>Lot Number:</strong> <span>{{ record.lot if record else 'N/A' }}</span></li>
+      <li><strong>Supply Date:</strong> <span>{{ record.supply_date if record else 'N/A' }}</span></li>
+      <li><strong>Warranty Status:</strong> <span>{{ warranty_status if warranty_status else 'N/A' }}</span></li>
+      <li><strong>Inspection Status:</strong> <span>{{ record.inspection_status if record else 'N/A' }}</span></li>
+      <li><strong>Location:</strong> <span>{{ record.location if record else 'N/A' }}</span></li>
+      <li><strong>Warranty Period:</strong> <span>{{ record.warranty if record else 'N/A' }}</span></li>
+    </ul>
+
+    {% if replacement_report %}
+    <div class="ai-box" style="border-color: #ff6b6b; background-color: #fff5f5;">
+      <h3 style="color: #ff6b6b;">⚠️ Replacement Report Required</h3>
+      <p>{{ replacement_report | safe }}</p>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+      <a href="/user-scan-upload">⬅️ Back to Scan/Upload</a>
+    </div>
+  </div>
+
+  <script>
+    // Enhance the train animation with random speed variations
+    document.addEventListener('DOMContentLoaded', function() {
+      const train = document.querySelector('.train');
+      if (train) {
+        const speed = 15 + Math.random() * 10; // Random speed between 15-25s
+        train.style.animationDuration = speed + 's';
+      }
+
+      // Add click effect to the button
+      const button = document.querySelector('.footer a');
+      if (button) {
+        button.addEventListener('click', function(e) {
+          e.preventDefault();
+
+          // Add a train departure animation
+          const container = document.querySelector('.container');
+          if (container) {
+            container.style.animation = 'trackArrival 0.8s ease-in-out reverse forwards';
+          }
+
+          // Navigate after animation completes
+          setTimeout(() => {
+            window.location.href = this.href;
+          }, 800);
+        });
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Railway QR System - Secure Login</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-dark: #0d1b2a;
+      --primary-medium: #1b263b;
+      --primary-light: #415a77;
+      --accent: #e63946;
+      --light: #f1faee;
+      --highlight: #a8dadc;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary-medium), var(--primary-light));
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Montserrat', sans-serif;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* 3D Railway Animation */
+    .railway-scene {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 40%;
+      perspective: 500px;
+      transform-style: preserve-3d;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .track {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 120px;
+      background: linear-gradient(to top, #2c2c2c 0%, #1a1a1a 100%);
+      transform: rotateX(60deg);
+      transform-origin: bottom;
+      z-index: 1;
+    }
+
+    .track-lines {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      height: 10px;
+      background: repeating-linear-gradient(
+        to right,
+        #fff 0%,
+        #fff 10%,
+        transparent 10%,
+        transparent 20%
+      );
+      transform: translateY(-50%);
+      animation: trackMove 1.5s linear infinite;
+    }
+
+    .sleepers {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      height: 10px;
+      background: repeating-linear-gradient(
+        to right,
+        transparent 0%,
+        transparent 4%,
+        #5a3921 4%,
+        #5a3921 6%,
+        transparent 6%,
+        transparent 100%
+      );
+      transform: translateY(-50%);
+    }
+
+    .train {
+      position: absolute;
+      bottom: 60px;
+      left: 0;
+      width: 180px;
+      height: 60px;
+      background: linear-gradient(to right, #e63946, #ff7c7c);
+      border-radius: 10px 20px 20px 10px;
+      animation: trainMove 15s linear infinite;
+      box-shadow: 0 0 20px rgba(230, 57, 70, 0.7);
+      transform-style: preserve-3d;
+      z-index: 2;
+    }
+
+    .train:before {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 30px;
+      height: 30px;
+      background: #1b263b;
+      border-radius: 50%;
+      box-shadow: 40px 0 0 #1b263b, 80px 0 0 #1b263b, 120px 0 0 #1b263b;
+    }
+
+    .train-window {
+      position: absolute;
+      top: 15px;
+      right: 30px;
+      width: 25px;
+      height: 25px;
+      background: #a8dadc;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #a8dadc;
+    }
+
+    .train-details {
+      position: absolute;
+      bottom: -10px;
+      left: 0;
+      width: 100%;
+      height: 15px;
+      background: #333;
+      border-radius: 0 0 10px 10px;
+    }
+
+    .smoke {
+      position: absolute;
+      top: -30px;
+      left: 20px;
+      width: 20px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 50%;
+      filter: blur(5px);
+      animation: smoke 3s infinite ease-out;
+    }
+
+    .smoke:nth-child(2) {
+      left: 30px;
+      animation-delay: 0.5s;
+      width: 25px;
+      height: 45px;
+    }
+
+    .smoke:nth-child(3) {
+      left: 40px;
+      animation-delay: 1s;
+      width: 30px;
+      height: 50px;
+    }
+
+    @keyframes trainMove {
+      0% { left: -200px; }
+      100% { left: 100%; }
+    }
+
+    @keyframes trackMove {
+      0% { background-position-x: 0; }
+      100% { background-position-x: 100px; }
+    }
+
+    @keyframes smoke {
+      0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.5);
+      }
+      50% {
+        opacity: 0.8;
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-100px) scale(2);
+      }
+    }
+
+    /* Scenery */
+    .scenery {
+      position: absolute;
+      bottom: 120px;
+      width: 100%;
+      height: 30%;
+      z-index: 0;
+    }
+
+    .mountain {
+      position: absolute;
+      bottom: 0;
+      width: 0;
+      height: 0;
+      border-left: 100px solid transparent;
+      border-right: 100px solid transparent;
+      border-bottom: 150px solid #415a77;
+      opacity: 0.6;
+    }
+
+    .mountain:nth-child(1) {
+      left: 5%;
+    }
+
+    .mountain:nth-child(2) {
+      left: 25%;
+      border-bottom: 120px solid #1b263b;
+    }
+
+    .mountain:nth-child(3) {
+      left: 60%;
+      border-bottom: 180px solid #0d1b2a;
+    }
+
+    .mountain:nth-child(4) {
+      left: 80%;
+      border-bottom: 140px solid #1b263b;
+    }
+
+    /* Login Card Styles */
+    .login-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 450px;
+    }
+
+    .login-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 2.5rem;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(168, 218, 220, 0.1), transparent);
+      transform: rotate(45deg);
+      animation: shine 3s infinite;
+      z-index: 1;
+    }
+
+    @keyframes shine {
+      0% {
+        left: -50%;
+      }
+      100% {
+        left: 150%;
+      }
+    }
+
+    .login-card h2 {
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 1.8rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .login-card h2 i {
+      margin-right: 10px;
+      color: var(--primary-light);
+    }
+
+    .form-label {
+      font-weight: 600;
+      color: var(--primary-medium);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .form-label i {
+      margin-right: 8px;
+      color: var(--primary-light);
+    }
+
+    .form-control {
+      padding: 0.8rem 1rem;
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      transition: all 0.3s;
+      margin-bottom: 1.2rem;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 0.25rem rgba(65, 90, 119, 0.25);
+      transform: translateY(-2px);
+    }
+
+    .input-group-text {
+      background: transparent;
+      border: 2px solid #e9ecef;
+      border-left: none;
+      cursor: pointer;
+    }
+
+    .input-group .form-control {
+      border-right: none;
+    }
+
+    .btn-login {
+      background: linear-gradient(135deg, var(--primary-medium), var(--primary-dark));
+      color: white;
+      border: none;
+      padding: 0.8rem;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: all 0.3s;
+      box-shadow: 0 5px 15px rgba(13, 27, 42, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-login::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: 0.5s;
+    }
+
+    .btn-login:hover::before {
+      left: 100%;
+    }
+
+    .btn-login:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(13, 27, 42, 0.4);
+    }
+
+    .btn-login:active {
+      transform: translateY(1px);
+    }
+
+    .additional-options {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1.2rem;
+      font-size: 0.9rem;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 1.8rem;
+      color: var(--primary-medium);
+      font-size: 0.85rem;
+    }
+
+    .railway-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+      border-radius: 50%;
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    .railway-icon i {
+      font-size: 2.5rem;
+      color: white;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(65, 90, 119, 0.7);
+      }
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(65, 90, 119, 0);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(65, 90, 119, 0);
+      }
+    }
+
+    #status-indicator {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-weight: 600;
+      color: #000;
+      z-index: 1000;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s;
+    }
+
+    .language-selector {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      z-index: 1000;
+    }
+
+    .language-btn {
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      border-radius: 20px;
+      padding: 5px 15px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s;
+    }
+
+    .language-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Hackathon Scoring Panel */
+    .scoring-panel {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 15px;
+      padding: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      z-index: 100;
+      width: 250px;
+    }
+
+    .scoring-panel h4 {
+      color: var(--primary-dark);
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      text-align: center;
+      border-bottom: 2px solid var(--primary-light);
+      padding-bottom: 5px;
+    }
+
+    .score-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 8px 0;
+      font-size: 0.9rem;
+    }
+
+    .score-value {
+      font-weight: 600;
+      color: var(--primary-medium);
+    }
+
+    .progress {
+      height: 8px;
+      margin-top: 5px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .railway-scene {
+        height: 30%;
+      }
+
+      .scoring-panel {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        width: auto;
+      }
+
+      .train {
+        display: none;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .login-card {
+        padding: 1.8rem;
+      }
+
+      .railway-icon {
+        width: 70px;
+        height: 70px;
+      }
+
+      .railway-icon i {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Status Indicator -->
+  <div id="status-indicator">
+    <span id="status-text">Checking...</span>
+  </div>
+
+  <!-- Language Selector -->
+  <div class="language-selector">
+    <button class="language-btn"><i class="fas fa-globe me-1"></i> English</button>
+  </div>
+
+  <!-- Railway Animation -->
+  <div class="railway-scene">
+    <div class="scenery">
+      <div class="mountain"></div>
+      <div class="mountain"></div>
+      <div class="mountain"></div>
+      <div class="mountain"></div>
+    </div>
+
+    <div class="track">
+      <div class="track-lines"></div>
+      <div class="sleepers"></div>
+    </div>
+
+    <div class="train">
+      <div class="smoke"></div>
+      <div class="smoke"></div>
+      <div class="smoke"></div>
+      <div class="train-window"></div>
+      <div class="train-details"></div>
+    </div>
+  </div>
+
+
+  <!-- Login Container -->
+  <div class="login-container">
+    <div class="login-card">
+      <div class="railway-icon">
+        <i class="fas fa-train"></i>
+      </div>
+      <h2><i class="fas fa-lock"></i> Secure Authentication</h2>
+      <form method="POST">
+        <div class="mb-3">
+          <label for="username" class="form-label"><i class="fas fa-user"></i> Username</label>
+          <input type="text" class="form-control" id="username" name="username" required placeholder="Enter your username">
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label"><i class="fas fa-key"></i> Password</label>
+          <div class="input-group">
+            <input type="password" class="form-control" id="password" name="password" required placeholder="Enter your password">
+            <span class="input-group-text" id="togglePassword">
+              <i class="fas fa-eye"></i>
+            </span>
+          </div>
+        </div>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="rememberMe">
+          <label class="form-check-label" for="rememberMe">Remember me</label>
+        </div>
+        <button type="submit" class="btn btn-login w-100">Access System</button>
+
+        <div class="additional-options">
+          <a href="#" class="text-decoration-none">Forgot Password?</a>
+          <a href="#" class="text-decoration-none">Create Account</a>
+        </div>
+      </form>
+      <div class="footer">
+        <p>Ministry of Railways | Smart QR Fittings System</p>
+        <p class="text-muted">v2.1.0 | Secure Access Portal</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Password visibility toggle
+    document.getElementById('togglePassword').addEventListener('click', function() {
+      const passwordInput = document.getElementById('password');
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+
+      this.querySelector('i').classList.toggle('fa-eye');
+      this.querySelector('i').classList.toggle('fa-eye-slash');
+    });
+
+    // Network status indicator
+    function updateStatus() {
+      const online = navigator.onLine;
+      const statusText = online ? "🟢 Online" : "🔴 Offline";
+      const bgColor = online ? "#d4edda" : "#f8d7da";
+      document.getElementById("status-text").innerText = statusText;
+      document.getElementById("status-indicator").style.backgroundColor = bgColor;
+    }
+
+    // Initialize
+    window.addEventListener("load", updateStatus);
+    window.addEventListener("online", updateStatus);
+    window.addEventListener("offline", updateStatus);
+  </script>
+</body>
+</html>

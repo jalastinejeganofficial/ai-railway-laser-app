@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Railway Replacement Reports</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #003366;
+      --secondary: #996633;
+      --accent: #cc0000;
+      --light: #f3f3f3;
+      --dark: #1a1a1a;
+      --track: #444;
+      --signal-green: #00cc66;
+      --signal-yellow: #ffcc00;
+      --signal-red: #ff3333;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom, #0a1a2a, #1e3c5a);
+      color: var(--light);
+      line-height: 1.6;
+      padding: 20px;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: repeating-linear-gradient(
+        90deg,
+        var(--track) 0px,
+        var(--track) 20px,
+        transparent 20px,
+        transparent 40px
+      );
+      z-index: 10;
+      animation: track-move 1.5s linear infinite;
+    }
+
+    @keyframes track-move {
+      0% { background-position-x: 0px; }
+      100% { background-position-x: 40px; }
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 30px auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 10px;
+      border-bottom: 3px solid var(--secondary);
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      color: white;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .header p {
+      color: #ccc;
+      font-size: 1.1rem;
+    }
+
+    .train-icon {
+      font-size: 2rem;
+      color: var(--accent);
+      margin: 0 10px;
+      animation: train-move 3s ease-in-out infinite;
+    }
+
+    @keyframes train-move {
+      0%, 100% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+    }
+
+    .reports-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 25px;
+    }
+
+    .report {
+      background: linear-gradient(145deg, #2c3e50, #1a2836);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      border-left: 5px solid var(--accent);
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .report:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .report::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent), var(--secondary), var(--accent));
+      background-size: 200% 100%;
+      animation: line-move 2s linear infinite;
+    }
+
+    @keyframes line-move {
+      0% { background-position: 0% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .report-id {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: var(--primary);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .meta {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px dashed #556c88;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .meta-item i {
+      color: var(--secondary);
+      width: 25px;
+      margin-right: 10px;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .status-pending {
+      background-color: var(--signal-yellow);
+      color: var(--dark);
+    }
+
+    .status-resolved {
+      background-color: var(--signal-green);
+      color: var(--dark);
+    }
+
+    .status-urgent {
+      background-color: var(--signal-red);
+      color: white;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+
+    .report-content {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      border-left: 3px solid var(--secondary);
+    }
+
+    .signal-lights {
+      display: flex;
+      gap: 8px;
+      position: absolute;
+      bottom: 15px;
+      right: 15px;
+    }
+
+    .signal-light {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #444;
+    }
+
+    .signal-light.red { animation: signal-red 3s infinite; }
+    .signal-light.yellow { animation: signal-yellow 3s infinite 1s; }
+    .signal-light.green { animation: signal-green 3s infinite 2s; }
+
+    @keyframes signal-red {
+      0%, 100% { background: #444; }
+      33% { background: var(--signal-red); box-shadow: 0 0 8px var(--signal-red); }
+    }
+
+    @keyframes signal-yellow {
+      0%, 100% { background: #444; }
+      33% { background: var(--signal-yellow); box-shadow: 0 0 8px var(--signal-yellow); }
+    }
+
+    @keyframes signal-green {
+      0%, 100% { background: #444; }
+      33% { background: var(--signal-green); box-shadow: 0 0 8px var(--signal-green); }
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 50px;
+      padding: 20px;
+      color: #8899aa;
+      font-size: 0.9rem;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .reports-container {
+        grid-template-columns: 1fr;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .report {
+        padding: 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+
+      .header h1 {
+        font-size: 1.7rem;
+      }
+
+      .train-icon {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-train train-icon"></i> Railway Replacement Reports <i class="fas fa-train train-icon"></i></h1>
+      <p>Expired QR Code Items Requiring Attention</p>
+    </div>
+
+    <div class="reports-container">
+      {% if reports %}
+        {% for r in reports %}
+          <div class="report">
+            <div class="report-id">#{{ r.id }}</div>
+            <div class="meta">
+              <div class="meta-item"><i class="fas fa-barcode"></i> <strong>Lot:</strong> {{ r.lot }}</div>
+              <div class="meta-item"><i class="fas fa-cube"></i> <strong>Item:</strong> {{ r.item }}</div>
+              <div class="meta-item"><i class="fas fa-store"></i> <strong>Vendor:</strong> {{ r.vendor }}</div>
+              <div class="meta-item"><i class="far fa-calendar-times"></i> <strong>Expired On:</strong> {{ r.expired_on }}</div>
+              <div class="meta-item"><i class="far fa-calendar-alt"></i> <strong>Reported:</strong> {{ r.created_at[:10] if r.created_at else 'N/A' }}</div>
+              <span class="status status-{{ r.status|lower|replace(' ', '-') if r.status else 'pending' }}">{{ r.status if r.status else 'Pending' }}</span>
+            </div>
+            <div class="report-content">
+              <p>{{ r.report | safe if r.report else 'No report content available.' }}</p>
+            </div>
+            <div class="signal-lights">
+              <div class="signal-light red"></div>
+              <div class="signal-light yellow"></div>
+              <div class="signal-light green"></div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: rgba(0,0,0,0.3); border-radius: 10px;">
+          <i class="fas fa-inbox" style="font-size: 3rem; color: #8899aa; margin-bottom: 20px;"></i>
+          <h3>No Replacement Reports Found</h3>
+          <p>There are currently no expired items requiring replacement.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="footer">
+      <p>Railway Maintenance System • © 2023 All Rights Reserved</p>
+    </div>
+  </div>
+
+  <script>
+    // Add staggered animation for report cards
+    document.addEventListener('DOMContentLoaded', function() {
+      const reports = document.querySelectorAll('.report');
+
+      reports.forEach((report, index) => {
+        report.style.animationDelay = `${index * 0.1}s`;
+      });
+    });
+  </script>
+</body>
+</html>

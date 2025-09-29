@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RailQR Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom, #0d2d4f, #1a4b78);
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #333;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Railway tracks background effect */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 30px;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 5px,
+        rgba(255, 204, 0, 0.3) 5px,
+        rgba(255, 204, 0, 0.3) 10px
+      );
+      z-index: -1;
+    }
+
+    .moving-train {
+      position: absolute;
+      top: 15px;
+      left: -100px;
+      font-size: 24px;
+      animation: moveTrain 15s linear infinite;
+      z-index: -1;
+      color: #ffcc00;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    @keyframes moveTrain {
+      0% {
+        left: -100px;
+      }
+      100% {
+        left: 100%;
+      }
+    }
+
+    .container {
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 600px;
+      animation: fadeIn 0.8s ease-in-out;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      border-left: 8px solid #ffcc00;
+    }
+
+    .container::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: linear-gradient(to right, #003366, #ffcc00, #003366);
+    }
+
+    h2 {
+      color: #003366;
+      margin-bottom: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 350px;
+      margin: 0 auto 25px auto;
+      border: 3px solid #003366;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    #reader::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      background: linear-gradient(45deg, rgba(255, 204, 0, 0.1) 25%, transparent 25%,
+                                transparent 50%, rgba(255, 204, 0, 0.1) 50%,
+                                rgba(255, 204, 0, 0.1) 75%, transparent 75%);
+      background-size: 10px 10px;
+    }
+
+    form {
+      margin-top: 20px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      border: 2px dashed #003366;
+      position: relative;
+    }
+
+    .form-icon {
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffcc00;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid #003366;
+      color: #003366;
+    }
+
+    input[type="file"] {
+      display: block;
+      margin: 30px auto 20px auto;
+      padding: 10px;
+      border: 2px solid #003366;
+      border-radius: 8px;
+      background: white;
+      width: 80%;
+      max-width: 300px;
+    }
+
+    button {
+      padding: 14px 25px;
+      border: none;
+      background: #003366;
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 0 auto;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    button:hover {
+      background: #002244;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    a {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 25px;
+      text-decoration: none;
+      color: #003366;
+      font-weight: bold;
+      transition: all 0.3s;
+      padding: 10px 15px;
+      border-radius: 8px;
+      background: #ffcc00;
+    }
+
+    a:hover {
+      color: #002244;
+      background: #ffd633;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .status-indicator {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-weight: bold;
+      color: #000;
+      z-index: 999;
+      background: #ffcc00;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      border: 2px solid #003366;
+    }
+
+    .train-icon {
+      font-size: 18px;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(3px); }
+    }
+
+    .railway-signal {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 20px;
+      height: 60px;
+      background: #003366;
+      border-radius: 5px;
+    }
+
+    .railway-signal::after {
+      content: "";
+      position: absolute;
+      bottom: -10px;
+      left: 0;
+      width: 100%;
+      height: 10px;
+      background: #333;
+      border-radius: 2px;
+    }
+
+    .signal-light {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #ffcc00;
+      animation: signalBlink 2s infinite;
+    }
+
+    @keyframes signalBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .scanner-animation {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: #ffcc00;
+      animation: scanLine 2s infinite linear;
+      z-index: 10;
+      box-shadow: 0 0 10px #ffcc00;
+    }
+
+    @keyframes scanLine {
+      0% { top: 0; }
+      100% { top: 100%; }
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 25px 20px;
+      }
+
+      input[type="file"] {
+        width: 95%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="moving-train">
+    <i class="fas fa-train"></i>
+  </div>
+
+  <div id="status-indicator" class="status-indicator">
+    <i class="fas fa-train train-icon"></i>
+    <span id="status-text">Checking...</span>
+  </div>
+
+  <div class="container">
+    <div class="railway-signal">
+      <div class="signal-light"></div>
+    </div>
+
+    <h2><i class="fas fa-qrcode"></i> Scan RailQR Code</h2>
+    <div id="reader">
+      <div class="scanner-animation"></div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" action="/upload-qr">
+      <div class="form-icon">
+        <i class="fas fa-upload"></i>
+      </div>
+      <h2><i class="fas fa-file-upload"></i> Upload QR Image</h2>
+      <input type="file" name="qr_image" accept="image/*">
+      <button type="submit"><i class="fas fa-search"></i> Scan QR</button>
+    </form>
+
+    <a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+
+  <script>
+    function onScanSuccess(decodedText) {
+      // Add train departure animation before redirecting
+      document.body.classList.add('scan-success');
+      setTimeout(() => {
+        window.location.href = "/view-details?code=" + encodeURIComponent(decodedText);
+      }, 800);
+    }
+
+    const html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      onScanSuccess
+    ).catch(err => {
+      console.error("Failed to start QR scanner", err);
+    });
+  </script>
+
+  <script>
+    function updateStatus() {
+      const online = navigator.onLine;
+      const statusText = online ? "🟢 Online" : "🔴 Offline";
+      const bgColor = online ? "#d4edda" : "#f8d7da";
+      document.getElementById("status-text").innerText = statusText;
+      document.getElementById("status-indicator").style.backgroundColor = bgColor;
+    }
+
+    window.addEventListener("load", updateStatus);
+    window.addEventListener("online", updateStatus);
+    window.addEventListener("offline", updateStatus);
+
+    // Add multiple trains for better railway effect
+    function addTrains() {
+      const body = document.body;
+      const trainIcons = ['fa-train', 'fa-train-tram', 'fa-subway'];
+
+      for (let i = 0; i < 3; i++) {
+        const train = document.createElement('div');
+        train.className = 'moving-train';
+        train.style.top = `${15 + (i * 40)}px`;
+        train.style.animationDelay = `${i * 3}s`;
+        train.innerHTML = `<i class="fas ${trainIcons[i % trainIcons.length]}"></i>`;
+        body.appendChild(train);
+      }
+    }
+
+    addTrains();
+  </script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Metadata Dashboard</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f7fc;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 25px;
+      font-size: 26px;
+      animation: fadeIn 0.6s ease-in-out;
+    }
+
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.08);
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 25px;
+      animation: fadeIn 0.8s ease-in-out;
+    }
+
+    label {
+      font-weight: bold;
+      color: #34495e;
+    }
+
+    input, select {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      outline: none;
+      transition: border 0.3s;
+    }
+
+    input:focus, select:focus {
+      border: 1px solid #4e73df;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      background: #4e73df;
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #3751c5;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background: #4e73df;
+      color: white;
+      font-size: 15px;
+      text-transform: uppercase;
+    }
+
+    tr:hover {
+      background: #f1f5ff;
+      transition: background 0.2s;
+    }
+
+    a {
+      color: #4e73df;
+      text-decoration: none;
+      font-weight: bold;
+      transition: color 0.3s;
+    }
+
+    a:hover {
+      color: #2c4dbf;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<div id="status-indicator" style="position:fixed;top:10px;right:10px;padding:6px 12px;border-radius:6px;font-weight:bold;color:#000;z-index:999;">
+  <span id="status-text">Checking...</span>
+</div>
+
+  <h2>📋 QR Metadata Dashboard</h2>
+
+  <div style="text-align: center; margin-bottom: 20px;">
+    <a href="/admin-dashboard" style="display: inline-block; padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; transition: background 0.3s;" onmouseover="this.style.background='#545b62'" onmouseout="this.style.background='#6c757d'">⬅️ Back to Admin Dashboard</a>
+  </div>
+
+  <form method="POST">
+    <label>Vendor:</label>
+    <input type="text" name="vendor">
+
+    <label>Inspection Status:</label>
+    <select name="inspection_status">
+      <option value="">--Select--</option>
+      <option value="Pending">Pending</option>
+      <option value="Passed">Passed</option>
+      <option value="Failed">Failed</option>
+    </select>
+
+    <button type="submit">🔍 Search</button>
+  </form>
+
+  <table>
+    <tr>
+      <th>ID</th><th>Item</th><th>Vendor</th><th>Lot</th><th>Supply Date</th>
+      <th>Warranty</th><th>Inspection</th><th>Location</th><th>Edit</th>
+    </tr>
+    {% if records %}
+    {% for row in records %}
+    <tr>
+      <td>{{ row.id }}</td>
+      <td>{{ row.item }}</td>
+      <td>{{ row.vendor }}</td>
+      <td>{{ row.lot }}</td>
+      <td>{{ row.supply_date }}</td>
+      <td>{{ row.warranty }}</td>
+      <td>{{ row.inspection_status }}</td>
+      <td>{{ row.location }}</td>
+      <td><a href="/edit/{{ row.id }}">✏️ Edit</a></td>
+    </tr>
+    {% endfor %}
+    {% else %}
+    <tr>
+      <td colspan="9" style="text-align: center; padding: 30px; color: #666;">
+        🔍 No records found. Try adjusting your search filters or add some data first.
+      </td>
+    </tr>
+    {% endif %}
+  </table>
+
+<script>
+function updateStatus() {
+  const online = navigator.onLine;
+  const statusText = online ? "🟢 Online" : "🔴 Offline";
+  const bgColor = online ? "#d4edda" : "#f8d7da";
+  document.getElementById("status-text").innerText = statusText;
+  document.getElementById("status-indicator").style.backgroundColor = bgColor;
+}
+window.addEventListener("load", updateStatus);
+window.addEventListener("online", updateStatus);
+window.addEventListener("offline", updateStatus);
+</script>
+
+
+</body>
+</html>
+
+<!-- modified -->

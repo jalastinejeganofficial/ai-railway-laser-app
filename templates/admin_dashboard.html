@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Railway QR System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #1b263b;
+      --secondary-color: #415a77;
+      --accent-color: #e63946;
+      --light-color: #f4f6f9;
+      --dark-color: #0d1b2a;
+      --success-color: #2a9d8f;
+      --track-color: #7d8597;
+    }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--light-color);
+      color: #333;
+      overflow-x: hidden;
+    }
+
+    /* Online/Offline Status */
+    #status-indicator {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: bold;
+      color: #000;
+      z-index: 1100;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      font-size: 0.85rem;
+    }
+
+    /* Animated Background Tracks */
+    .tracks-container {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 40px;
+      overflow: hidden;
+      z-index: -1;
+      opacity: 0.1;
+    }
+
+    .track {
+      position: absolute;
+      bottom: 15px;
+      width: 100%;
+      height: 5px;
+      background: var(--track-color);
+      border-top: 2px dotted #999;
+    }
+
+    .tie {
+      position: absolute;
+      bottom: 13px;
+      width: 15px;
+      height: 9px;
+      background: var(--track-color);
+      border-radius: 2px;
+    }
+
+    /* Moving Train Animation */
+    .train-animation {
+      position: fixed;
+      bottom: 25px;
+      left: -100px;
+      font-size: 24px;
+      z-index: 900;
+      animation: moveTrain 30s linear infinite;
+    }
+
+    @keyframes moveTrain {
+      0% { left: -100px; }
+      100% { left: 100%; }
+    }
+
+    /* Sidebar */
+    .sidebar {
+      height: 100vh;
+      background: var(--primary-color);
+      color: #fff;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 240px;
+      padding-top: 1rem;
+      transition: all 0.3s ease;
+      z-index: 1000;
+      box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+      overflow-y: auto;
+      background-image: linear-gradient(to bottom, var(--primary-color), var(--dark-color));
+    }
+
+    .sidebar.collapsed {
+      transform: translateX(-100%);
+      width: 0;
+      padding: 0;
+    }
+
+    .sidebar-header {
+      padding: 0 1rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sidebar-header h4 {
+      text-align: center;
+      margin: 0;
+      font-weight: bold;
+      color: #fff;
+      position: relative;
+      z-index: 2;
+    }
+
+    .sidebar-header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--accent-color);
+      transform: translateX(-100%);
+      transition: transform 0.5s ease;
+    }
+
+    .sidebar:not(.collapsed) .sidebar-header::after {
+      transform: translateX(0);
+    }
+
+    .sidebar a {
+      color: #ddd;
+      text-decoration: none;
+      display: block;
+      padding: 12px 20px;
+      margin: 6px 10px;
+      border-radius: 8px;
+      transition: 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sidebar a::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .sidebar a:hover::before {
+      left: 100%;
+    }
+
+    .sidebar a:hover {
+      background: var(--secondary-color);
+      color: #fff;
+      transform: translateX(5px);
+    }
+
+    .sidebar a i {
+      margin-right: 10px;
+      width: 20px;
+      text-align: center;
+    }
+
+    /* Overlay for mobile when sidebar is open */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+
+    .sidebar-overlay.active {
+      display: block;
+    }
+
+    /* Main Content */
+    .content {
+      margin-left: 240px;
+      padding: 1rem;
+      transition: margin-left 0.3s ease;
+    }
+
+    .content.expanded {
+      margin-left: 0;
+    }
+
+    /* Topbar */
+    .topbar {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      flex-wrap: wrap;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .topbar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 5px;
+      height: 100%;
+      background: var(--accent-color);
+      transition: width 0.3s ease;
+    }
+
+    .topbar:hover::before {
+      width: 10px;
+    }
+
+    .topbar h2 {
+      margin: 0;
+      font-weight: bold;
+      color: var(--primary-color);
+      font-size: 1.5rem;
+    }
+
+    /* Cards */
+    .card {
+      border: none;
+      border-radius: 10px;
+      transition: transform 0.3s, box-shadow 0.3s;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: var(--accent-color);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover::after {
+      transform: scaleX(1);
+    }
+
+    .card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .card-title {
+      color: var(--primary-color);
+      font-weight: bold;
+    }
+
+    /* Card icons with animation */
+    .card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover .card-icon {
+      transform: scale(1.2) rotate(5deg);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+      .sidebar {
+        width: 220px;
+      }
+
+      .content {
+        margin-left: 0;
+        padding: 0.8rem;
+      }
+
+      .sidebar:not(.collapsed) {
+        transform: translateX(0);
+        width: 220px;
+      }
+
+      .sidebar.collapsed {
+        transform: translateX(-100%);
+      }
+
+      .train-animation {
+        bottom: 20px;
+        font-size: 20px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0.8rem;
+      }
+
+      .topbar > div {
+        margin-bottom: 0.5rem;
+      }
+
+      .topbar h2 {
+        font-size: 1.3rem;
+      }
+
+      .train-animation {
+        display: none; /* Hide train on very small screens */
+      }
+    }
+
+    @media (max-width: 576px) {
+      .card {
+        margin-bottom: 1rem;
+      }
+
+      .topbar h2 {
+        font-size: 1.2rem;
+      }
+
+      .tracks-container {
+        height: 30px;
+      }
+    }
+
+    /* Custom button styles */
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .btn-primary:hover::before {
+      left: 100%;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--secondary-color);
+      border-color: var(--secondary-color);
+      transform: translateY(-2px);
+    }
+
+    .btn-success {
+      background-color: var(--success-color);
+      border-color: var(--success-color);
+    }
+
+    /* Animation for cards */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    /* Staggered animation for cards */
+    .card:nth-child(1) { animation-delay: 0.1s; }
+    .card:nth-child(2) { animation-delay: 0.2s; }
+    .card:nth-child(3) { animation-delay: 0.3s; }
+    .card:nth-child(4) { animation-delay: 0.4s; }
+    .card:nth-child(5) { animation-delay: 0.5s; }
+
+    /* Pulsing animation for important elements */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    /* Notification badge with animation */
+    .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: var(--accent-color);
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      animation: pulse 1.5s infinite;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Online/Offline Status -->
+<div id="status-indicator">
+  <span id="status-text">Checking...</span>
+</div>
+
+<!-- Railway Themed Animations -->
+<div class="train-animation">
+  <i class="fas fa-train"></i>
+</div>
+
+<div class="tracks-container">
+  <div class="track"></div>
+  <!-- Railway ties will be added by JavaScript -->
+</div>
+
+<!-- Overlay for mobile sidebar -->
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+<!-- Sidebar -->
+<div id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <h4><i class="fas fa-train"></i> Admin Panel</h4>
+  </div>
+  <a href="/dashboard"><i class="fas fa-list"></i> View All QR Records</a>
+  <a href="/ai-report"><i class="fas fa-robot"></i> Generate AI Report</a>
+  <a href="/export"><i class="fas fa-file-export"></i> Export Metadata to CSV</a>
+  <a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+</div>
+
+<!-- Main Content -->
+<div id="content" class="content">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="d-flex align-items-center">
+      <button id="toggle-btn" class="btn btn-outline-primary btn-sm me-3">
+        <i class="fas fa-bars"></i>
+      </button>
+      <h2><i class="fas fa-user-shield"></i> Admin Dashboard</h2>
+    </div>
+    <span class="text-muted">Ministry of Railways</span>
+  </div>
+
+  <!-- Dashboard Cards -->
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+    <div class="col">
+      <div class="card shadow-sm text-center">
+        <div class="card-body">
+          <div class="mb-3 position-relative">
+            <i class="fas fa-qrcode card-icon text-primary"></i>
+            <span class="notification-badge">5</span>
+          </div>
+          <h5 class="card-title">QR Records</h5>
+          <p class="text-muted">Manage and review all scanned QR metadata.</p>
+          <a href="/dashboard" class="btn btn-primary btn-sm">View Records</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card shadow-sm text-center">
+        <div class="card-body">
+          <div class="mb-3">
+            <i class="fas fa-brain card-icon text-success"></i>
+          </div>
+          <h5 class="card-title">AI Assistant</h5>
+          <p class="text-muted">Ask inspection-related questions in natural language.</p>
+          <a href="/ai-chat" class="btn btn-success btn-sm">Open Chat</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card shadow-sm text-center">
+        <div class="card-body">
+          <div class="mb-3">
+            <i class="fas fa-file-alt card-icon text-info"></i>
+          </div>
+          <h5 class="card-title">Replacement Reports</h5>
+          <p class="text-muted">Latest AI-generated report for expired fitting.</p>
+          <a href="{{ url_for('admin_reports') }}" class="btn btn-info btn-sm">View All Reports</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card shadow-sm text-center">
+        <div class="card-body">
+          <div class="mb-3">
+            <i class="fas fa-chart-line card-icon text-warning"></i>
+          </div>
+          <h5 class="card-title">AI Reports</h5>
+          <p class="text-muted">Generate insights from AI-powered analysis.</p>
+          <a href="/ai-report" class="btn btn-warning btn-sm">Generate Report</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card shadow-sm text-center pulse">
+        <div class="card-body">
+          <div class="mb-3">
+            <i class="fas fa-download card-icon text-danger"></i>
+          </div>
+          <h5 class="card-title">Export Data</h5>
+          <p class="text-muted">Export metadata in CSV format for auditing.</p>
+          <a href="/export" class="btn btn-danger btn-sm">Export CSV</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Create railway ties for the track animation
+  function createTracks() {
+    const tracksContainer = document.querySelector('.tracks-container');
+    const track = tracksContainer.querySelector('.track');
+    const containerWidth = tracksContainer.offsetWidth;
+
+    // Create railway ties
+    for (let i = 0; i < containerWidth / 30; i++) {
+      const tie = document.createElement('div');
+      tie.className = 'tie';
+      tie.style.left = (i * 30) + 'px';
+      tracksContainer.appendChild(tie);
+    }
+  }
+
+  // Initialize the dashboard
+  function initDashboard() {
+    createTracks();
+
+    const toggleBtn = document.getElementById("toggle-btn");
+    const sidebar = document.getElementById("sidebar");
+    const content = document.getElementById("content");
+    const overlay = document.getElementById("sidebar-overlay");
+
+    // Check if we're on a mobile device
+    const isMobile = window.matchMedia("(max-width: 992px)").matches;
+
+    // Initialize sidebar state based on screen size
+    if (isMobile) {
+      sidebar.classList.add("collapsed");
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("collapsed");
+      overlay.classList.toggle("active");
+
+      // Only toggle content margin on larger screens
+      if (!isMobile) {
+        content.classList.toggle("expanded");
+      }
+    });
+
+    // Close sidebar when clicking on overlay (mobile)
+    overlay.addEventListener("click", () => {
+      sidebar.classList.add("collapsed");
+      overlay.classList.remove("active");
+    });
+
+    // Close sidebar when clicking on a link (mobile)
+    const sidebarLinks = document.querySelectorAll(".sidebar a");
+    sidebarLinks.forEach(link => {
+      link.addEventListener("click", () => {
+        if (isMobile) {
+          sidebar.classList.add("collapsed");
+          overlay.classList.remove("active");
+        }
+      });
+    });
+
+    // Online/Offline status
+    function updateStatus() {
+      const online = navigator.onLine;
+      const statusText = online ? "🟢 Online" : "🔴 Offline";
+      const bgColor = online ? "#d4edda" : "#f8d7da";
+      document.getElementById("status-text").innerText = statusText;
+      document.getElementById("status-indicator").style.backgroundColor = bgColor;
+    }
+
+    window.addEventListener("load", updateStatus);
+    window.addEventListener("online", updateStatus);
+    window.addEventListener("offline", updateStatus);
+
+    // Adjust layout on window resize
+    window.addEventListener("resize", () => {
+      const isNowMobile = window.matchMedia("(max-width: 992px)").matches;
+
+      if (isNowMobile !== isMobile) {
+        // Device type changed (e.g., from desktop to mobile)
+        window.location.reload(); // Simplest solution to adjust layout
+      }
+    });
+  }
+
+  // Initialize the dashboard when the DOM is loaded
+  document.addEventListener('DOMContentLoaded', initDashboard);
+</script>
+
+</body>
+</html>

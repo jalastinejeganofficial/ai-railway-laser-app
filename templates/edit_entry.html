@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit QR Entry</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f7fc;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .container {
+      background: #fff;
+      padding: 25px 35px;
+      border-radius: 15px;
+      box-shadow: 0px 6px 18px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 600px;
+      animation: fadeIn 0.8s ease-in-out;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #34495e;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      transition: border 0.3s;
+    }
+
+    input:focus, select:focus {
+      border: 1px solid #4e73df;
+      outline: none;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      background: #4e73df;
+      color: #fff;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #3751c5;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<div id="status-indicator" style="position:fixed;top:10px;right:10px;padding:6px 12px;border-radius:6px;font-weight:bold;color:#000;z-index:999;">
+  <span id="status-text">Checking...</span>
+</div>
+
+  <div class="container">
+    <h2>✏️ Edit QR Metadata</h2>
+    <form method="POST">
+      <label>Item:</label>
+      <input type="text" name="item" value="{{ record.item if record else '' }}">
+
+      <label>Vendor:</label>
+      <input type="text" name="vendor" value="{{ record.vendor if record else '' }}">
+
+      <label>Lot:</label>
+      <input type="text" name="lot" value="{{ record.lot if record else '' }}">
+
+      <label>Supply Date:</label>
+      <input type="date" name="supply_date" value="{{ record.supply_date if record else '' }}">
+
+      <label>Warranty:</label>
+      <input type="text" name="warranty" value="{{ record.warranty if record else '' }}">
+
+      <label>Inspection Status:</label>
+      <select name="inspection_status">
+        <option value="Pending" {% if record and record.inspection_status == "Pending" %}selected{% endif %}>Pending</option>
+        <option value="Passed" {% if record and record.inspection_status == "Passed" %}selected{% endif %}>Passed</option>
+        <option value="Failed" {% if record and record.inspection_status == "Failed" %}selected{% endif %}>Failed</option>
+      </select>
+
+      <label>Location:</label>
+      <input type="text" name="location" value="{{ record.location if record else '' }}">
+
+      <button type="submit">✅ Update</button>
+    </form>
+  </div>
+
+<script>
+function updateStatus() {
+  const online = navigator.onLine;
+  const statusText = online ? "🟢 Online" : "🔴 Offline";
+  const bgColor = online ? "#d4edda" : "#f8d7da";
+  document.getElementById("status-text").innerText = statusText;
+  document.getElementById("status-indicator").style.backgroundColor = bgColor;
+}
+window.addEventListener("load", updateStatus);
+window.addEventListener("online", updateStatus);
+window.addEventListener("offline", updateStatus);
+</script>
+
+
+</body>
+</html>
+
+<!-- modified -->

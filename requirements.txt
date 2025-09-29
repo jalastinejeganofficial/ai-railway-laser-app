@@ -1,0 +1,22 @@
+# Flask web framework and related packages
+Flask==2.3.3
+Flask-Login==0.6.3
+
+# Image processing for QR code handling
+Pillow==10.0.1
+pyzbar==0.1.9
+
+# Security utilities
+Werkzeug==2.3.7
+
+# HTTP requests for API calls
+requests==2.31.0
+
+# Environment variable management
+python-dotenv==1.0.0
+
+# Supabase client for database operations
+supabase==1.2.0
+
+# Standard library modules (included in Python)
+# os, re, datetime - no installation required
