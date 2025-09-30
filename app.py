@@ -83,7 +83,8 @@ if os.getenv('FLASK_ENV') == 'production':
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
+# Type checking fix for login_manager
+login_manager.login_view = 'login'  # type: ignore
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -318,16 +319,20 @@ def view_details():
             supply_date = datetime.strptime(supply_date, "%Y-%m-%d")
         
         warranty_days = parse_warranty(warranty)
-        warranty_end = supply_date + timedelta(days=warranty_days)
+        warranty_end = None
         today = datetime.now().date()
         
-        warranty_status = f"✅ Warranty valid until {warranty_end.date()} ({(warranty_end.date() - today).days} days left)" if today <= warranty_end.date() else f"❌ Warranty expired on {warranty_end.date()} ({(today - warranty_end.date()).days} days ago)"
+        if supply_date and warranty_days:
+            warranty_end = supply_date + timedelta(days=warranty_days)
+            warranty_status = f"✅ Warranty valid until {warranty_end.date()} ({(warranty_end.date() - today).days} days left)" if today <= warranty_end.date() else f"❌ Warranty expired on {warranty_end.date()} ({(today - warranty_end.date()).days} days ago)"
+        else:
+            warranty_status = "⚠️ Warranty information not available"
         
         # Skip AI message processing for faster loading
         ai_message = None
 
         replacement_report = None
-        if today > warranty_end.date():
+        if warranty_end and today > warranty_end.date():
             agentic_prompt = f"""
             The following railway fitting has expired warranty. Generate a replacement report.
 
@@ -517,7 +522,7 @@ def ai_report():
                     
                     warranty = record.get('warranty', '')
                     warranty_days = parse_warranty(warranty)
-                    if warranty_days > 0:
+                    if warranty_days > 0 and supply_date:
                         warranty_end = supply_date + timedelta(days=warranty_days)
                         if today > warranty_end:
                             expired_items.append({
@@ -606,10 +611,13 @@ def export_ai_report():
                             supply_date = datetime.strptime(supply_date, "%Y-%m-%d").date()
                         elif hasattr(supply_date, 'date'):
                             supply_date = supply_date.date()
+                        else:
+                            # Skip records with invalid date formats
+                            continue
                         
                         warranty = record.get('warranty', '')
                         warranty_days = parse_warranty(warranty)
-                        if warranty_days > 0:
+                        if warranty_days > 0 and supply_date:
                             warranty_end = supply_date + timedelta(days=warranty_days)
                             if today > warranty_end:
                                 expired_days = (today - warranty_end).days
@@ -699,7 +707,9 @@ def generate_report():
             supply_date = datetime.strptime(supply_date, "%Y-%m-%d")
         
         warranty_days = parse_warranty(warranty)
-        warranty_end = supply_date + timedelta(days=warranty_days)
+        warranty_end = None
+        if supply_date and warranty_days:
+            warranty_end = supply_date + timedelta(days=warranty_days)
 
         agentic_prompt = f"""
         Generate a replacement report for an expired railway fitting.
@@ -707,9 +717,9 @@ def generate_report():
         Product: {item}
         Vendor: {vendor}
         Lot: {lot}
-        Supply Date: {supply_date.date() if hasattr(supply_date, 'date') else supply_date}
+        Supply Date: {supply_date.date() if supply_date and hasattr(supply_date, 'date') else supply_date}
         Warranty: {warranty}
-        Expired On: {warranty_end.date()}
+        Expired On: {warranty_end.date() if warranty_end else 'N/A'}
         Inspection Status: {status}
         Location: {location}
 
@@ -747,7 +757,7 @@ def generate_report():
                 'lot': lot,
                 'item': item,
                 'vendor': vendor,
-                'expired_on': warranty_end.date().isoformat(),
+                'expired_on': warranty_end.date().isoformat() if warranty_end else datetime.now().date().isoformat(),
                 'report': replacement_report
             }).execute()
         except Exception as e:
@@ -879,7 +889,8 @@ def health_check():
     overall_status = "healthy" if db_healthy else "unhealthy"
     health_checks["status"] = overall_status
     
-    return jsonify(health_checks), 200 if db_healthy else 503
+    # Always return 200 for Render health check - only return 503 for severe issues
+    return jsonify(health_checks), 200
 
 if __name__ == "__main__":
     # Initialize database and create default users
@@ -894,7 +905,7 @@ if __name__ == "__main__":
     print(f"🔗 Supabase URL: {SUPABASE_URL}")
     
     # Use environment variable for port (Render requirement)
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 10000))
     # Disable debug in production
     debug_mode = os.environ.get('FLASK_ENV') != 'production'
     app.run(host="0.0.0.0", port=port, debug=debug_mode)

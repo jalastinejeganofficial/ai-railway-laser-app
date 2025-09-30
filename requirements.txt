@@ -1,13 +1,14 @@
 # Flask web framework and related packages
-Flask
+Flask>=2.0.0
 Flask-Login
 
 # WSGI server for production deployment
 Gunicorn
 
 # Image processing for QR code handling - use compatible versions
-Pillow
+Pillow>=8.0.0
 qreader
+pyzbar
 
 # Security utilities
 Werkzeug
@@ -20,4 +21,4 @@ python-dotenv
 
 # Supabase client for database operations
 supabase
-qrcode
+qrcode[pil]
