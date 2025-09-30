@@ -1,6 +1,6 @@
-# 🚄 AI Railway Laser QR Management System
+# 🚄 Railway QR Scanner
 
-A sophisticated Flask web application for managing railway track fittings through QR code scanning, with AI-powered analysis and reporting capabilities.
+A sophisticated Flask web application for managing railway track fittings through QR code scanning, with AI-powered analysis and reporting capabilities. Features a modern interface with the Railway QR Scanner branding and logo.
 
 ## ✨ Features
 
@@ -135,7 +135,7 @@ A sophisticated Flask web application for managing railway track fittings throug
    - Select your forked repository
 
 3. **Configure the service:**
-   - **Name**: `ai-railway-qr-system`
+   - **Name**: `railway-qr-scanner`
    - **Environment**: `Python 3`
    - **Build Command**: `./build.sh`
    - **Start Command**: `gunicorn --bind 0.0.0.0:$PORT app:app`
@@ -193,7 +193,7 @@ If automatic deployment fails:
 3. Review application logs
 
 ### 📊 Health Check Endpoint
-Once deployed, test your app health at: `https://your-app.onrender.com/health`
+Once deployed, test your app health at: `https://railway-qr-scanner.onrender.com/health`
 
 ## 📱 User Roles
 

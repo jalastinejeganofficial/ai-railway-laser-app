@@ -199,6 +199,28 @@
       animation: pulse 1.5s infinite;
     }
 
+    .status-expired {
+      background-color: var(--signal-red);
+      color: white;
+      animation: pulse 1.5s infinite;
+    }
+
+    .status-checked {
+      background-color: var(--signal-green);
+      color: var(--dark);
+    }
+
+    .status-waiting {
+      background-color: var(--signal-yellow);
+      color: var(--dark);
+    }
+
+    .status-problem {
+      background-color: var(--signal-red);
+      color: white;
+      animation: pulse 1.5s infinite;
+    }
+
     @keyframes pulse {
       0% { opacity: 1; }
       50% { opacity: 0.7; }
@@ -245,6 +267,37 @@
     @keyframes signal-green {
       0%, 100% { background: #444; }
       33% { background: var(--signal-green); box-shadow: 0 0 8px var(--signal-green); }
+    }
+
+    .status-form {
+      margin-top: 15px;
+      padding-top: 10px;
+      border-top: 1px dashed #556c88;
+    }
+
+    .status-form select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid #556c88;
+      margin-bottom: 10px;
+    }
+
+    .status-form button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    .status-form button:hover {
+      background: #0055aa;
     }
 
     .footer {
@@ -296,17 +349,28 @@
       {% if reports %}
         {% for r in reports %}
           <div class="report">
-            <div class="report-id">#{{ r.id }}</div>
+            <div class="report-id">#{{ r.id if r.id else 'N/A' }}</div>
             <div class="meta">
-              <div class="meta-item"><i class="fas fa-barcode"></i> <strong>Lot:</strong> {{ r.lot }}</div>
-              <div class="meta-item"><i class="fas fa-cube"></i> <strong>Item:</strong> {{ r.item }}</div>
-              <div class="meta-item"><i class="fas fa-store"></i> <strong>Vendor:</strong> {{ r.vendor }}</div>
-              <div class="meta-item"><i class="far fa-calendar-times"></i> <strong>Expired On:</strong> {{ r.expired_on }}</div>
+              <div class="meta-item"><i class="fas fa-barcode"></i> <strong>Lot:</strong> {{ r.lot if r.lot else 'N/A' }}</div>
+              <div class="meta-item"><i class="fas fa-cube"></i> <strong>Item:</strong> {{ r.item if r.item else 'N/A' }}</div>
+              <div class="meta-item"><i class="fas fa-store"></i> <strong>Vendor:</strong> {{ r.vendor if r.vendor else 'N/A' }}</div>
+              <div class="meta-item"><i class="far fa-calendar-times"></i> <strong>Expired On:</strong> {{ r.expired_on if r.expired_on else 'N/A' }}</div>
               <div class="meta-item"><i class="far fa-calendar-alt"></i> <strong>Reported:</strong> {{ r.created_at[:10] if r.created_at else 'N/A' }}</div>
-              <span class="status status-{{ r.status|lower|replace(' ', '-') if r.status else 'pending' }}">{{ r.status if r.status else 'Pending' }}</span>
+              <span class="status status-{{ r.status|lower|replace(' ', '-') if r.status else 'expired' }}">{{ r.status if r.status else 'Expired' }}</span>
             </div>
             <div class="report-content">
               <p>{{ r.report | safe if r.report else 'No report content available.' }}</p>
+            </div>
+            <div class="status-form">
+              <form class="status-update-form" data-report-id="{{ r.id }}">
+                <select name="status">
+                  <option value="Pending" {% if r.status == 'Pending' %}selected{% endif %}>Pending</option>
+                  <option value="Checked" {% if r.status == 'Checked' %}selected{% endif %}>Checked</option>
+                  <option value="Waiting" {% if r.status == 'Waiting' %}selected{% endif %}>Waiting</option>
+                  <option value="Problem Not Solved" {% if r.status == 'Problem Not Solved' %}selected{% endif %}>Problem Not Solved</option>
+                </select>
+                <button type="submit">Update Status</button>
+              </form>
             </div>
             <div class="signal-lights">
               <div class="signal-light red"></div>
@@ -320,6 +384,7 @@
           <i class="fas fa-inbox" style="font-size: 3rem; color: #8899aa; margin-bottom: 20px;"></i>
           <h3>No Replacement Reports Found</h3>
           <p>There are currently no expired items requiring replacement.</p>
+          <p style="margin-top: 15px; font-size: 0.9rem; color: #aaa;">Scan QR codes with expired warranties to generate reports.</p>
         </div>
       {% endif %}
     </div>
@@ -336,6 +401,43 @@
 
       reports.forEach((report, index) => {
         report.style.animationDelay = `${index * 0.1}s`;
+      });
+
+      // Handle status update forms
+      const forms = document.querySelectorAll('.status-update-form');
+      forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          
+          const reportId = this.getAttribute('data-report-id');
+          const statusSelect = this.querySelector('select');
+          const newStatus = statusSelect.value;
+          
+          // Send update request
+          fetch('/admin-reports/update-status', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `report_id=${reportId}&status=${encodeURIComponent(newStatus)}`
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              // Update the status display
+              const statusElement = this.closest('.report').querySelector('.status');
+              statusElement.textContent = newStatus;
+              statusElement.className = 'status status-' + newStatus.toLowerCase().replace(' ', '-');
+              alert('Status updated successfully!');
+            } else {
+              alert('Error updating status: ' + data.error);
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('Error updating status: ' + error.message);
+          });
+        });
       });
     });
   </script>

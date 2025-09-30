@@ -3,9 +3,20 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from datetime import datetime, timedelta
 from PIL import Image
 from PIL.Image import Image as PILImage
+import os, re, requests
+from dotenv import load_dotenv
+from supabase import create_client, Client
+from werkzeug.security import check_password_hash
+
+# QR Code imports
+import qrcode
+from io import BytesIO
+import base64
+
 # Try to import qreader first (pure Python), fallback to pyzbar if available
 QR_SCANNING_AVAILABLE = False
 QR_LIBRARY = "none"
+QR_GENERATION_AVAILABLE = True
 
 # Define default function
 
@@ -41,11 +52,6 @@ except ImportError:
         print("⚠️ No QR code library available - QR code scanning will be disabled")
         QR_SCANNING_AVAILABLE = False
         QR_LIBRARY = "none"
-
-from werkzeug.security import check_password_hash
-import os, re, requests
-from dotenv import load_dotenv
-from supabase import create_client, Client
 
 load_dotenv()
 
@@ -328,7 +334,7 @@ def view_details():
             Product: {item}
             Vendor: {vendor}
             Lot: {lot}
-            Supply Date: {supply_date.date()}
+            Supply Date: {supply_date.date() if hasattr(supply_date, 'date') else supply_date}
             Warranty: {warranty}
             Expired On: {warranty_end.date()}
             Inspection Status: {status}
@@ -354,7 +360,6 @@ def view_details():
                 "temperature": 0.3
             }
 
-            payload["messages"][1]["content"] = agentic_prompt
             try:
                 response = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=30)
                 data = response.json()
@@ -369,7 +374,8 @@ def view_details():
                     'item': item,
                     'vendor': vendor,
                     'expired_on': warranty_end.date().isoformat(),
-                    'report': replacement_report
+                    'report': replacement_report,
+                    'status': 'Pending'  # Add status field for better tracking
                 }).execute()
             except Exception as e:
                 print(f"Error saving replacement report: {e}")
@@ -505,6 +511,9 @@ def ai_report():
                         supply_date = datetime.strptime(supply_date, "%Y-%m-%d").date()
                     elif hasattr(supply_date, 'date'):
                         supply_date = supply_date.date()
+                    else:
+                        # Skip records with invalid date formats
+                        continue
                     
                     warranty = record.get('warranty', '')
                     warranty_days = parse_warranty(warranty)
@@ -625,11 +634,41 @@ def admin_reports():
     if current_user.role != "admin":
         return "⛔ Access denied"
     try:
+        # Fetch replacement reports with better error handling
         response = supabase.table('replacement_reports').select('*').order('created_at', desc=True).execute()
-        reports = response.data
+        reports = response.data if response.data else []
         return render_template("admin_report.html", reports=reports)
     except Exception as e:
-        return f"❌ Error loading reports: {e}"
+        print(f"Error loading reports: {e}")
+        # Return empty reports list instead of error page
+        return render_template("admin_report.html", reports=[])
+
+@app.route("/admin-reports/update-status", methods=["POST"])
+@login_required
+def update_report_status():
+    if current_user.role != "admin":
+        return jsonify({"error": "⛔ Access denied"}), 403
+    
+    try:
+        report_id = request.form.get("report_id")
+        new_status = request.form.get("status")
+        
+        if not report_id or not new_status:
+            return jsonify({"error": "Missing report ID or status"}), 400
+        
+        # Update the report status in the database
+        response = supabase.table('replacement_reports').update({
+            'status': new_status
+        }).eq('id', report_id).execute()
+        
+        if response.data:
+            return jsonify({"success": True, "message": "Status updated successfully"})
+        else:
+            return jsonify({"error": "Failed to update status"}), 500
+            
+    except Exception as e:
+        print(f"Error updating report status: {e}")
+        return jsonify({"error": f"Error updating status: {str(e)}"}), 500
 
 @app.route("/generate-report", methods=["POST"])
 @login_required
@@ -668,7 +707,7 @@ def generate_report():
         Product: {item}
         Vendor: {vendor}
         Lot: {lot}
-        Supply Date: {supply_date.date()}
+        Supply Date: {supply_date.date() if hasattr(supply_date, 'date') else supply_date}
         Warranty: {warranty}
         Expired On: {warranty_end.date()}
         Inspection Status: {status}
@@ -737,6 +776,81 @@ def report_generated(lot):
             return "❌ No replacement report found for this lot."
     except Exception as e:
         return f"❌ Error loading report: {e}"
+
+@app.route("/admin-generate-qr", methods=["GET", "POST"])
+@login_required
+def admin_generate_qr():
+    if current_user.role != "admin":
+        return "⛔ Access denied"
+    
+    # Check if QR generation is available
+    if not QR_GENERATION_AVAILABLE:
+        return "❌ QR code generation is not available. Please install the qrcode library."
+    
+    if request.method == "GET":
+        # Show form to generate QR code
+        try:
+            # Get all track fittings for selection
+            response = supabase.table('track_fittings').select('*').execute()
+            records = response.data
+            return render_template("admin_generate_qr.html", records=records)
+        except Exception as e:
+            return f"❌ Database error: {e}"
+    
+    elif request.method == "POST":
+        # Generate QR code
+        try:
+            # Get form data
+            item_id = request.form.get("item_id")
+            if not item_id:
+                return "❌ No item selected"
+            
+            # Get item details from database
+            response = supabase.table('track_fittings').select('*').eq('id', item_id).execute()
+            if not response.data or len(response.data) == 0:
+                return "❌ Item not found"
+            
+            record = response.data[0]
+            
+            # Prepare QR code data (this would be sent to hardware)
+            qr_data = {
+                'lot': record['lot'],
+                'item': record['item'],
+                'vendor': record['vendor'],
+                'supply_date': record['supply_date'],
+                'warranty': record['warranty'],
+                'inspection_status': record['inspection_status'],
+                'location': record['location']
+            }
+            
+            # Convert to string format for QR code
+            qr_string = f"LOT:{record['lot']}|ITEM:{record['item']}|VENDOR:{record['vendor']}|DATE:{record['supply_date']}|WARRANTY:{record['warranty']}|STATUS:{record['inspection_status']}|LOCATION:{record['location']}"
+            
+            # Generate QR code image
+            qr = qrcode.QRCode(version=1, box_size=10, border=5)
+            qr.add_data(qr_string)
+            qr.make(fit=True)
+            
+            img = qr.make_image(fill_color="black", back_color="white")
+            
+            # Save to memory buffer
+            buffer = BytesIO()
+            img.save(buffer, 'PNG')
+            buffer.seek(0)
+            
+            # Convert to base64 for display
+            img_str = base64.b64encode(buffer.getvalue()).decode()
+            
+            return render_template("admin_generate_qr.html", 
+                                 records=[],  # Don't need to show records again
+                                 qr_image=img_str,
+                                 qr_data=qr_data,
+                                 record=record)
+                                 
+        except Exception as e:
+            return f"❌ Error generating QR code: {e}"
+    # Add explicit return for all code paths
+    return "❌ Unexpected error"
 
 @app.route("/health")
 def health_check():

@@ -1,23 +1,23 @@
 # Flask web framework and related packages
-Flask>=3.0.0,<4.0.0
-Flask-Login>=0.6.0
+Flask
+Flask-Login
 
 # WSGI server for production deployment
-Gunicorn>=21.0.0
+Gunicorn
 
 # Image processing for QR code handling - use compatible versions
-Pillow>=10.0.0
-# pyzbar>=0.1.9  # Commented out due to zbar system library requirement
-# qreader>=3.0.0  # Alternative QR library
+Pillow
+qreader
 
 # Security utilities
-Werkzeug>=3.0.0
+Werkzeug
 
 # HTTP requests for API calls
-requests>=2.31.0
+requests
 
 # Environment variable management
-python-dotenv>=1.0.0
+python-dotenv
 
 # Supabase client for database operations
-supabase>=2.0.0
+supabase
+qrcode

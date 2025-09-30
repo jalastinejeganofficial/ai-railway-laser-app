@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: ai-railway-qr-system
+    name: railway-qr-scanner
     env: python
     buildCommand: |
       apt-get update
